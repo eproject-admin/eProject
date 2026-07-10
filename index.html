@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>eProject - Dashboard Pelaporan BPJN Kalimantan Utara</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- TOP BAR -->
+  <header class="bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-blue-600 p-2.5 rounded-xl">
+          <i class="fa-solid fa-person-digging text-xl text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">eProject Kaltara</h1>
+          <p class="text-xs text-slate-300">Aplikasi Jalan dan Jembatan</p>
+        </div>
+      </div>
+      <div class="mt-4 md:mt-0 flex items-center space-x-4">
+        <span class="text-xs bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full font-semibold border border-emerald-500/30">
+          <i class="fa-solid fa-circle-check mr-1"></i> Data Terhubung
+        </span>
+        <button onclick="refreshData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center transition">
+          <i class="fa-solid fa-arrows-rotate mr-2"></i> Refresh Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <!-- Card 1 -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-400">Total Akun Terdaftar</p>
+          <h3 class="text-3xl font-bold text-slate-900 mt-1" id="total-accounts">0</h3>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-xl text-blue-600">
+          <i class="fa-solid fa-users text-2xl"></i>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-400">Total Item Kontrak</p>
+          <h3 class="text-3xl font-bold text-slate-900 mt-1" id="total-contracts">0</h3>
+        </div>
+        <div class="bg-purple-50 p-4 rounded-xl text-purple-600">
+          <i class="fa-solid fa-file-contract text-2xl"></i>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-400">Total Laporan Opname</p>
+          <h3 class="text-3xl font-bold text-slate-900 mt-1" id="total-opnames">0</h3>
+        </div>
+        <div class="bg-emerald-50 p-4 rounded-xl text-emerald-600">
+          <i class="fa-solid fa-clipboard-list text-2xl"></i>
+        </div>
+      </div>
+      <!-- Card 4 -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-400">Nilai Kontrak Terdata</p>
+          <h3 class="text-xl font-bold text-slate-900 mt-1" id="total-value">Rp 0</h3>
+        </div>
+        <div class="bg-amber-50 p-4 rounded-xl text-amber-600">
+          <i class="fa-solid fa-rupiah-sign text-2xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID CONTAINER -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- DATA OPNAME TABLE (Left and Wide) -->
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900">Rekapitulasi Data Opname Pekerjaan</h2>
+            <p class="text-xs text-slate-400">Data hasil sinkronisasi real-time aplikasi Android eProject</p>
+          </div>
+          <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center transition">
+            <i class="fa-solid fa-file-excel mr-1.5"></i> Export Excel
+          </button>
+        </div>
+        
+        <!-- Search & Filter bar -->
+        <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="text" id="search-input" oninput="filterTable()" placeholder="Cari lokasi, ruas jalan, divisi..." class="border border-slate-200 px-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select id="road-filter" onchange="filterTable()" class="border border-slate-200 px-4 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Semua Ruas Jalan</option>
+          </select>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="min-w-full divide-y divide-slate-100 text-sm text-left">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs font-semibold">
+              <tr>
+                <th class="px-4 py-3">No</th>
+                <th class="px-4 py-3">Tanggal</th>
+                <th class="px-4 py-3">Lokasi</th>
+                <th class="px-4 py-3">Sisi</th>
+                <th class="px-4 py-3">Ruas Jalan</th>
+                <th class="px-4 py-3">Pekerjaan</th>
+                <th class="px-4 py-3 text-right">Volume</th>
+                <th class="px-4 py-3">Satuan</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100" id="opname-table-body">
+              <tr>
+                <td colspan="8" class="text-center py-8 text-slate-400">Sedang memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SIDE PANEL (Right) -->
+      <div class="space-y-8">
+        
+        <!-- ACCOUNTS LIST CARD -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 class="text-lg font-bold text-slate-900 mb-2">Akun Pengguna Aktif</h2>
+          <p class="text-xs text-slate-400 mb-4">Pengguna terdaftar dengan lisensi aktif 1 tahun</p>
+          
+          <div class="space-y-4 max-h-[300px] overflow-y-auto" id="accounts-container">
+            <!-- Loading -->
+            <p class="text-center py-4 text-slate-400 text-sm">Sedang memuat data...</p>
+          </div>
+        </div>
+
+        <!-- PROGRESS CHART -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+          <h2 class="text-lg font-bold text-slate-900 mb-4">Progres Fisik Rata-rata</h2>
+          <div class="relative flex items-center justify-center">
+            <canvas id="progressChart" class="max-h-[220px]"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <footer class="bg-slate-900 text-slate-400 py-12 mt-16 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-6 text-center space-y-2">
+      <p class="text-sm">eProject Dashboard &copy; 2024 - Hak Cipta Dilindungi</p>
+      <p class="text-xs text-slate-500">eProject by Dendy Sofian ©2024</p>
+    </div>
+  </footer>
+
+  <script>
+    // Simulated Mock Data for Apps Script Standalone preview,
+    // if integrated inside actual Spreadsheet this gets fetched dynamically!
+    let serverData = {
+      accounts: [
+        { email: "eproject.admin@gmail.com", role: "super_admin", approved: "YES", nomorakun: "ADM-000001", masaberlaku: "Unlimited", namapaket: "Admin BPJN Kaltara" },
+        { email: "dendy.sofian@gmail.com", role: "user", approved: "YES", nomorakun: "USR-768563", masaberlaku: "04 July 2027", namapaket: "Preservasi Jalan Sekatak Buji-Rian-Malinau" },
+        { email: "jembatan.bpjn@gmail.com", role: "admin", approved: "YES", nomorakun: "-", masaberlaku: "Unlimited", namapaket: "Preservasi Jembatan Malinau" }
+      ],
+      contracts: [
+        { id: 1, useremail: "dendy.sofian@gmail.com", divisi: "Divisi 5", itemcodeandname: "5.1.(1a) - Lapis Fondasi Agregat Kelas A", unit: "m3", volume: 200, unitprice: 1500000 },
+        { id: 2, useremail: "dendy.sofian@gmail.com", divisi: "Divisi 6", itemcodeandname: "6.3.(4a1) - Laston Lapis Aus (AC-WC) (Tumbukan 75x2)", unit: "ton", volume: 500, unitprice: 2500000 }
+      ],
+      opnames: [
+        { id: 1, useremail: "dendy.sofian@gmail.com", lokasi: "0+200", sisi: "Kanan", ruasjalan: "Sekatak Buji", tanggal: "2026-07-05", satuan: "m3", panjangm: 20, lebarm: 4, tinggim: 0.15, tebalcm: 15, luasanm2: 80, beratjenis: 1, divisi: "Divisi 5", itempekerjaan: "5.1.(1a) - Lapis Fondasi Agregat Kelas A", volumetotal: 12 },
+        { id: 2, useremail: "dendy.sofian@gmail.com", lokasi: "0+250", sisi: "Kiri", ruasjalan: "Rian Kaltara", tanggal: "2026-07-05", satuan: "ton", panjangm: 50, lebarm: 3.5, tinggim: 0.05, tebalcm: 5, luasanm2: 175, beratjenis: 2.3, divisi: "Divisi 6", itempekerjaan: "6.3.(4a1) - Laston Lapis Aus (AC-WC) (Tumbukan 75x2)", volumetotal: 20.12 }
+      ]
+    };
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // If we are running in actual Apps Script, fetch the actual sheet data:
+      if (typeof google !== "undefined" && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(function(res) {
+          if (res && res.accounts) {
+            serverData = res;
+          }
+          renderDashboard();
+        }).getDashboardData();
+      } else {
+        // standalone browser preview
+        renderDashboard();
+      }
+    });
+
+    function refreshData() {
+      if (typeof google !== "undefined" && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(function(res) {
+          if (res) serverData = res;
+          renderDashboard();
+          alert("Data Berhasil Diperbarui!");
+        }).getDashboardData();
+      } else {
+        renderDashboard();
+        alert("Mode Demo: Data diperbarui!");
+      }
+    }
+
+    function renderDashboard() {
+      // Update stats
+      document.getElementById("total-accounts").innerText = serverData.accounts.length;
+      document.getElementById("total-contracts").innerText = serverData.contracts.length;
+      document.getElementById("total-opnames").innerText = serverData.opnames.length;
+
+      let totalVal = serverData.contracts.reduce((sum, con) => sum + (con.volume * con.unitprice), 0);
+      document.getElementById("total-value").innerText = "Rp " + totalVal.toLocaleString("id-ID");
+
+      // Render accounts
+      const accountsContainer = document.getElementById("accounts-container");
+      accountsContainer.innerHTML = "";
+      serverData.accounts.forEach(acc => {
+        accountsContainer.innerHTML += `
+          <div class="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+            <div class="bg-blue-600 text-white font-bold h-10 w-10 rounded-full flex items-center justify-center">
+              ${acc.email.substring(0, 1).toUpperCase()}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="text-sm font-semibold truncate text-slate-800">${acc.email}</h4>
+              <p class="text-xs text-slate-400 truncate">${acc.namapaket || 'Paket Belum Diatur'}</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-md font-semibold bg-blue-100 text-blue-700">${acc.role}</span>
+          </div>
+        `;
+      });
+
+      // Render table
+      const tableBody = document.getElementById("opname-table-body");
+      tableBody.innerHTML = "";
+      serverData.opnames.forEach((op, index) => {
+        tableBody.innerHTML += `
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-4 py-3 text-slate-400">${index + 1}</td>
+            <td class="px-4 py-3 font-semibold text-slate-900">${op.tanggal || op.dateString || '-'}</td>
+            <td class="px-4 py-3">${op.lokasi || '-'}</td>
+            <td class="px-4 py-3">${op.sisi || '-'}</td>
+            <td class="px-4 py-3">${op.ruasjalan || '-'}</td>
+            <td class="px-4 py-3 max-w-[180px] truncate" title="${op.itempekerjaan || op.itemname}">${op.itempekerjaan || op.itemname || '-'}</td>
+            <td class="px-4 py-3 text-right font-bold text-slate-800">${Number(op.volumetotal || op.calculatedvolume).toFixed(2)}</td>
+            <td class="px-4 py-3 text-slate-400 font-semibold">${op.satuan || op.unit}</td>
+          </tr>
+        `;
+      });
+
+      // Render chart
+      renderChart();
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('progressChart').getContext('2d');
+      // Calculate total opname volume vs contract volume
+      let totalCon = serverData.contracts.reduce((sum, c) => sum + c.volume, 0);
+      let totalOp = serverData.opnames.reduce((sum, o) => sum + (o.volumetotal || o.calculatedvolume || 0), 0);
+      let percentage = totalCon > 0 ? (totalOp / totalCon) * 100 : 0;
+      let remaining = Math.max(0, 100 - percentage);
+
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Selesai (%)', 'Sisa (%)'],
+          datasets: [{
+            data: [percentage.toFixed(2), remaining.toFixed(2)],
+            backgroundColor: ['#2563eb', '#f1f5f9'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+
+    function filterTable() {
+      const query = document.getElementById("search-input").value.toLowerCase();
+      const rows = document.querySelectorAll("#opname-table-body tr");
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? "" : "none";
+      });
+    }
+
+    function exportToExcel() {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "No,Tanggal,Lokasi,Sisi,Ruas Jalan,Pekerjaan,Volume,Satuan\n";
+      serverData.opnames.forEach((op, idx) => {
+        csvContent += `${idx + 1},${op.tanggal},${op.lokasi},${op.sisi},${op.ruasjalan},"${op.itempekerjaan}",${op.volumetotal},${op.satuan}\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Rekap_Opname_eProject_Kaltara.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>

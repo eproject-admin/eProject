@@ -1,0 +1,6 @@
+{
+  "name": "eProject",
+  "description": "Aplikasi Jalan dan Jembatan oleh BPJN Kalimantan Utara",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
